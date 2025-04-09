@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#343a40" />
+    <link rel="icon" href="icon-192.png" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Transporte</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    
+    nav {
+      display: flex;
+      background-color: #343a40;
+      color: white;
+      padding: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 2px;
+    }
+    
+    nav button:hover, nav button.active {
+      background-color: #495057;
+    }
+    
+    section {
+      display: none;
+      padding: 20px;
+    }
+    
+    section.active {
+      display: block;
+    }
+    
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    
+    button {
+      margin-top: 15px;
+      background-color: #28a745;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #218838;
+    }
+    
+    .action-btn {
+      width: auto;
+      padding: 8px 12px;
+      margin: 2px;
+    }
+    
+    .edit-btn {
+      background-color: #ffc107;
+      color: #333;
+    }
+    
+    .edit-btn:hover {
+      background-color: #e0a800;
+    }
+    
+    .delete-btn {
+      background-color: #dc3545;
+    }
+    
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+    
+    .coluna {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .coluna > div {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .lista {
+      margin-top: 20px;
+    }
+    
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    li {
+      margin: 5px 0;
+      background: #eee;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .filtro-data {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .filtro-data label {
+      font-weight: bold;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+    
+    th {
+      background-color: #ecf0f1;
+      font-weight: 600;
+    }
+    
+    tfoot td {
+      font-weight: bold;
+      background-color: #f9f9f9;
+    }
+    
+    .alert {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .alert-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    @media (max-width: 768px) {
+      .filtro-data {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      
+      thead {
+        display: none;
+      }
+      
+      tr {
+        margin-bottom: 15px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.05);
+      }
+      
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: none;
+        position: relative;
+      }
+      
+      td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #555;
+      }
+      
+      tfoot {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log("Service Worker registrado", reg.scope))
+        .catch(err => console.error("Erro ao registrar SW:", err));
+    }
+  </script>
+<body>
+
+  <nav>
+    <button onclick="mostrarAba('formulario')" id="btn-formulario">🚛 Formulário</button>
+    <button onclick="mostrarAba('configuracoes')" id="btn-configuracoes">⚙️ Configurações</button>
+    <button onclick="mostrarAba('registros')" id="btn-registros">📋 Registros</button>
+  </nav>
+
+  <section id="formulario" class="active">
+    <h1>🚛 Formulário de Transporte</h1>
+    <div id="alert-form" class="alert"></div>
+
+    <form id="formTransporte">
+      <label for="dataCarregamento">Data do Carregamento:</label>
+      <input type="date" id="dataCarregamento" required>
+
+      <label for="dataDescarga">Data de Descarga:</label>
+      <input type="date" id="dataDescarga" required>
+
+      <label for="localCarregamento">Local de Carregamento:</label>
+      <select id="localCarregamento" required></select>
+
+      <label for="cidadeDescarga">Cidade de Descarga:</label>
+      <select id="cidadeDescarga" required></select>
+
+      <label for="localDescarga">Local de Descarga:</label>
+      <input type="text" id="localDescarga" required>
+
+      <label for="pesoLiquido">Peso Líquido (t):</label>
+      <input type="text" id="pesoLiquido" placeholder="Ex: 35,000" required>
+
+      <button type="submit">Salvar E Enviar 📩</button>
+    </form>
+  </section>
+
+  <section id="configuracoes">
+    <h1>⚙️ Configurações de Transporte</h1>
+    <div id="alert-config" class="alert"></div>
+
+    <div class="container">
+      <div class="coluna">
+        <div>
+          <h2>Locais de Carregamento</h2>
+          <input type="text" id="novoLocal" placeholder="Novo local de carregamento" />
+          <button onclick="adicionarLocal()">Adicionar Local</button>
+          <div class="lista">
+            <ul id="listaLocais"></ul>
+          </div>
+        </div>
+
+        <div>
+          <h2>Cidades de Descarga</h2>
+          <input type="text" id="novaCidade" placeholder="Nova cidade de descarga" />
+          <input type="number" id="valorCidade" placeholder="Valor por tonelada (R$)" step="0.01" min="0" />
+          <button onclick="adicionarCidade()">Adicionar Cidade</button>
+          <div class="lista">
+            <ul id="listaCidades"></ul>
+          </div>
+        </div>
+      </div>
+      
+      <label for="whatsappNumero">Número do WhatsApp para envio:</label>
+      <input type="tel" id="whatsappNumero" placeholder="Ex: 5542999999999" pattern="[0-9]{10,13}" />
+      
+      <button onclick="salvarConfiguracoes()">💾 Salvar Configurações</button>
+    </div>
+  </section>
+
+  <section id="registros">
+    <h1>📋 Registros de Transporte</h1>
+    <div id="alert-registros" class="alert"></div>
+
+    <div class="filtro-data">
+      <label for="dataInicio">De:</label>
+      <input type="date" id="dataInicio">
+      <label for="dataFim">Até:</label>
+      <input type="date" id="dataFim">
+      <button onclick="carregarTabela()">Filtrar</button>
+    </div>
+
+    <button id="downloadPdf" style="width: auto; margin: 10px auto; display: block;">⬇️ Baixar PDF</button>
+
+    <table id="tabelaRegistros">
+      <thead>
+        <tr>
+          <th>Carregamento</th>
+          <th>Descarga</th>
+          <th>Local Carreg.</th>
+          <th>Cidade Desc.</th>
+          <th>Local Desc.</th>
+          <th>Peso (t)</th>
+          <th>Valor Total</th>
+          <th>12%</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6" style="text-align: right;"><strong>Totais:</strong></td>
+          <td id="somaTotal">R$ 0,00</td>
+          <td id="soma12">R$ 0,00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  
+  <script>
+    // Variáveis globais
+    let locais = [];
+    let cidades = {};
+    let registros = JSON.parse(localStorage.getItem("transportData")) || [];
+    
+    // Funções de navegação
+    function mostrarAba(abaId) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(abaId).classList.add("active");
+      document.getElementById("btn-" + abaId).classList.add("active");
+      
+      // Atualizar dados quando mudar de aba
+      if (abaId === 'formulario') {
+        preencherLocais();
+        preencherCidades();
+      } else if (abaId === 'configuracoes') {
+        carregarDadosSalvos();
+      } else if (abaId === 'registros') {
+        carregarTabela();
+      }
+    }
+    
+    // Funções do Formulário
+    function configurarMascaraPeso() {
+      const pesoInput = document.getElementById("pesoLiquido");
+      
+      pesoInput.addEventListener("input", () => {
+        let valor = pesoInput.value.replace(/[^0-9]/g, '');
+        if (valor.length <= 2) {
+          pesoInput.value = valor;
+        } else {
+          const antesVirgula = valor.slice(0, 2);
+          const depoisVirgula = valor.slice(2, 5);
+          pesoInput.value = `${antesVirgula},${depoisVirgula}`;
+        }
+      });
+      
+      pesoInput.addEventListener("blur", () => {
+        let valor = pesoInput.value.replace(",", ".");
+        const numero = parseFloat(valor);
+        if (!isNaN(numero)) {
+          const numeroLimitado = Math.min(numero, 99.999);
+          const formatado = numeroLimitado.toFixed(3).replace(".", ",");
+          pesoInput.value = formatado;
+        }
+      });
+    }
+    
+    function formatarMoeda(valor) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(valor);
+    }
+    
+    function preencherLocais() {
+      const select = document.getElementById("localCarregamento");
+      locais = JSON.parse(localStorage.getItem("locaisCarregamento")) || [];
+      
+      select.innerHTML = "<option value=''>Selecione</option>";
+      locais.forEach(local => {
+        const opt = document.createElement("option");
+        opt.value = local;
+        opt.textContent = local;
+        select.appendChild(opt);
+      });
+    }
+    
+    function preencherCidades() {
+      const select = document.getElementById("cidadeDescarga");
+      cidades = JSON.parse(localStorage.getItem("cidadesDescarga")) || {};
+      
+      select.innerHTML = "<option value=''>Selecione</option>";
+      Object.entries(cidades).forEach(([nome, valor]) => {
+        const opt = document.createElement("option");
+        opt.value = nome;
+        opt.textContent = `${nome} (R$ ${valor.toFixed(2)} /ton)`;
+        select.appendChild(opt);
+      });
+    }
+    
+    function validarFormulario() {
+      const dataCarregamento = document.getElementById("dataCarregamento").value;
+      const dataDescarga = document.getElementById("dataDescarga").value;
+      const pesoStr = document.getElementById("pesoLiquido").value.replace(",", ".");
+      const pesoLiquido = parseFloat(pesoStr);
+      
+      if (new Date(dataDescarga) < new Date(dataCarregamento)) {
+        mostrarAlerta('form', 'A data de descarga deve ser posterior à data de carregamento', 'error');
+        return false;
+      }
+      
+      if (isNaN(pesoLiquido) || pesoLiquido <= 0) {
+        mostrarAlerta('form', 'Por favor, insira um peso válido', 'error');
+        return false;
+      }
+      
+      return true;
+    }
+    
+    function mostrarAlerta(section, mensagem, tipo) {
+      const alertDiv = document.getElementById(`alert-${section}`);
+      alertDiv.textContent = mensagem;
+      alertDiv.className = `alert alert-${tipo}`;
+      alertDiv.style.display = 'block';
+      
+      setTimeout(() => {
+        alertDiv.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Funções de Configurações
+    function carregarDadosSalvos() {
+      locais = JSON.parse(localStorage.getItem("locaisCarregamento")) || [];
+      cidades = JSON.parse(localStorage.getItem("cidadesDescarga")) || {};
+      
+      // Carrega número do WhatsApp
+      document.getElementById("whatsappNumero").value = localStorage.getItem("whatsappNumero") || "";
+      
+      atualizarListas();
+    }
+    
+    function adicionarLocal() {
+      const local = document.getElementById("novoLocal").value.trim();
+      if (local && !locais.includes(local)) {
+        locais.push(local);
+        document.getElementById("novoLocal").value = "";
+        atualizarListas();
+        mostrarAlerta('config', 'Local adicionado com sucesso', 'success');
+      } else {
+        mostrarAlerta('config', 'Local já existe ou é inválido', 'error');
+      }
+    }
+    
+    function adicionarCidade() {
+      const cidade = document.getElementById("novaCidade").value.trim();
+      const valor = parseFloat(document.getElementById("valorCidade").value);
+      
+      if (cidade && !isNaN(valor) && valor > 0) {
+        if (cidades[cidade]) {
+          mostrarAlerta('config', 'Cidade já existe', 'error');
+          return;
+        }
+        
+        cidades[cidade] = valor;
+        document.getElementById("novaCidade").value = "";
+        document.getElementById("valorCidade").value = "";
+        atualizarListas();
+        mostrarAlerta('config', 'Cidade adicionada com sucesso', 'success');
+      } else {
+        mostrarAlerta('config', 'Dados inválidos para a cidade', 'error');
+      }
+    }
+    
+    function atualizarListas() {
+      const listaLocais = document.getElementById("listaLocais");
+      const listaCidades = document.getElementById("listaCidades");
+      
+      listaLocais.innerHTML = "";
+      locais.forEach(local => {
+        const li = document.createElement("li");
+        li.textContent = local;
+        listaLocais.appendChild(li);
+      });
+      
+      listaCidades.innerHTML = "";
+      for (const cidade in cidades) {
+        const li = document.createElement("li");
+        li.textContent = `${cidade} - R$ ${cidades[cidade].toFixed(2)}`;
+        listaCidades.appendChild(li);
+      }
+    }
+    
+    function salvarConfiguracoes() {
+      localStorage.setItem("locaisCarregamento", JSON.stringify(locais));
+      localStorage.setItem("cidadesDescarga", JSON.stringify(cidades));
+      
+      // Salva número do WhatsApp
+      const whatsappNumero = document.getElementById("whatsappNumero").value.trim();
+      if (whatsappNumero) {
+        localStorage.setItem("whatsappNumero", whatsappNumero);
+      }
+      
+      mostrarAlerta('config', 'Configurações salvas com sucesso!', 'success');
+      preencherLocais();
+      preencherCidades();
+    }
+    
+    // Funções de Registros
+    function carregarTabela() {
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+      const tbody = document.querySelector("#tabelaRegistros tbody");
+      
+      registros = JSON.parse(localStorage.getItem("transportData")) || [];
+      tbody.innerHTML = "";
+      
+      registros.forEach((reg, index) => {
+        if (dataInicio && reg.dataCarregamento < dataInicio) return;
+        if (dataFim && reg.dataCarregamento > dataFim) return;
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td data-label="Carregamento"><input type="date" value="${reg.dataCarregamento}" data-index="${index}" data-campo="dataCarregamento"></td>
+          <td data-label="Descarga"><input type="date" value="${reg.dataDescarga}" data-index="${index}" data-campo="dataDescarga"></td>
+          <td data-label="Local Carreg."><input type="text" value="${reg.localCarregamento}" data-index="${index}" data-campo="localCarregamento"></td>
+          <td data-label="Cidade Desc."><input type="text" value="${reg.cidadeDescarga}" data-index="${index}" data-campo="cidadeDescarga"></td>
+          <td data-label="Local Desc."><input type="text" value="${reg.localDescarga}" data-index="${index}" data-campo="localDescarga"></td>
+          <td data-label="Peso (t)"><input type="number" step="0.001" value="${reg.pesoLiquido}" data-index="${index}" data-campo="pesoLiquido"></td>
+          <td data-label="Valor Total">${formatarMoeda(reg.total)}</td>
+          <td data-label="12%">${formatarMoeda(reg.percentual12)}</td>
+          <td data-label="Ações">
+            <button class="action-btn edit-btn" onclick="editarRegistro(${index})">Salvar</button>
+            <button class="action-btn delete-btn" onclick="excluirRegistro(${index})">Excluir</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      atualizarTotais();
+    }
+    
+    function atualizarTotais() {
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+      let totalGeral = 0;
+      let total12 = 0;
+      
+      registros.forEach(reg => {
+        if (dataInicio && reg.dataCarregamento < dataInicio) return;
+        if (dataFim && reg.dataCarregamento > dataFim) return;
+        totalGeral += reg.total || 0;
+        total12 += reg.percentual12 || 0;
+      });
+      
+      document.getElementById("somaTotal").textContent = formatarMoeda(totalGeral);
+      document.getElementById("soma12").textContent = formatarMoeda(total12);
+    }
+    
+    function editarRegistro(index) {
+      const inputs = document.querySelectorAll(`input[data-index='${index}']`);
+      inputs.forEach(input => {
+        registros[index][input.dataset.campo] = input.value;
+      });
+      
+      const peso = parseFloat(registros[index].pesoLiquido);
+      const cidade = registros[index].cidadeDescarga;
+      const cidadesConfig = JSON.parse(localStorage.getItem("cidadesDescarga")) || {};
+      const valorTonelada = cidadesConfig[cidade] || 0;
+      
+      registros[index].total = peso * valorTonelada;
+      registros[index].percentual12 = registros[index].total * 0.12;
+      
+      localStorage.setItem("transportData", JSON.stringify(registros));
+      mostrarAlerta('registros', 'Registro atualizado com sucesso', 'success');
+      carregarTabela();
+    }
+    
+    function excluirRegistro(index) {
+      if (confirm("Deseja realmente excluir este registro?")) {
+        registros.splice(index, 1);
+        localStorage.setItem("transportData", JSON.stringify(registros));
+        mostrarAlerta('registros', 'Registro excluído com sucesso', 'success');
+        carregarTabela();
+      }
+    }
+    
+    function gerarPDF() {
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "landscape" });
+      
+      doc.setFontSize(14);
+      doc.text("Registros de Transporte", 140, 15, null, null, "center");
+      
+      const headers = [
+        ["#", "Carregamento", "Descarga", "Local Carreg.", "Cidade Desc.", "Local Desc.", "Peso (t)", "Total (R$)", "12% (R$)"]
+      ];
+      
+      const data = registros
+        .filter(reg => {
+          if (dataInicio && reg.dataCarregamento < dataInicio) return false;
+          if (dataFim && reg.dataCarregamento > dataFim) return false;
+          return true;
+        })
+        .map((reg, i) => [
+          i + 1,
+          reg.dataCarregamento,
+          reg.dataDescarga,
+          reg.localCarregamento,
+          reg.cidadeDescarga,
+          reg.localDescarga,
+          parseFloat(reg.pesoLiquido).toLocaleString("pt-BR", { minimumFractionDigits: 3 }),
+          formatarMoeda(reg.total),
+          formatarMoeda(reg.percentual12)
+        ]);
+      
+      doc.autoTable({
+        head: headers,
+        body: data,
+        startY: 25,
+        theme: "striped",
+        headStyles: { fillColor: [22, 160, 133] },
+        styles: {
+          fontSize: 10,
+          cellPadding: 3,
+          overflow: "linebreak",
+          halign: "center",
+          valign: "middle"
+        },
+        margin: { top: 20 }
+      });
+      
+      doc.save("registros_transporte.pdf");
+    }
+    
+    // Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      // Configurações iniciais
+      configurarMascaraPeso();
+      carregarDadosSalvos();
+      preencherLocais();
+      preencherCidades();
+      
+      // Formulário
+      document.getElementById("formTransporte").addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        if (!validarFormulario()) return;
+        
+        const dataCarregamento = document.getElementById("dataCarregamento").value;
+        const dataDescarga = document.getElementById("dataDescarga").value;
+        const localCarregamento = document.getElementById("localCarregamento").value;
+        const cidadeDescarga = document.getElementById("cidadeDescarga").value;
+        const localDescarga = document.getElementById("localDescarga").value;
+        const pesoStr = document.getElementById("pesoLiquido").value.replace(",", ".");
+        const pesoLiquido = parseFloat(pesoStr);
+        
+        const cidadesConfig = JSON.parse(localStorage.getItem("cidadesDescarga")) || {};
+        const valorTonelada = cidadesConfig[cidadeDescarga] || 0;
+        const total = pesoLiquido * valorTonelada;
+        const percentual12 = total * 0.12;
+        
+        const mensagem = `*Transporte Registrado*%0A` +
+          `Carregamento: ${dataCarregamento}%0A` +
+          `Descarga: ${dataDescarga}%0A` +
+          `Local de Carregamento: ${localCarregamento}%0A` +
+          `Cidade de Descarga: ${cidadeDescarga}%0A` +
+          `Local de Descarga: ${localDescarga}%0A` +
+          `Peso Líquido: ${pesoLiquido.toFixed(3)} toneladas%0A` +
+          `Valor Total: ${formatarMoeda(total)}%0A` +
+          `12%: ${formatarMoeda(percentual12)}`;
+        
+        const numeroWhatsapp = localStorage.getItem("whatsappNumero") || "5542988322698";
+        const url = `https://wa.me/${numeroWhatsapp}?text=${mensagem}`;
+        window.open(url, "_blank");
+        
+        const id = Date.now();
+        
+        registros.push({
+          id,
+          dataCarregamento,
+          dataDescarga,
+          localCarregamento,
+          cidadeDescarga,
+          localDescarga,
+          pesoLiquido: pesoLiquido.toFixed(3),
+          total,
+          percentual12
+        });
+        
+        localStorage.setItem("transportData", JSON.stringify(registros));
+        document.getElementById("formTransporte").reset();
+        mostrarAlerta('form', 'Transporte salvo e mensagem enviada ao WhatsApp!', 'success');
+        
+        // Notificar para atualizar a tabela de registros
+        window.dispatchEvent(new Event("registroAtualizado"));
+      });
+      
+      // Registros
+      document.getElementById("downloadPdf").addEventListener("click", gerarPDF);
+      
+      // Atualizar tabela quando houver mudanças
+      window.addEventListener("registroAtualizado", carregarTabela);
+    });
+  </script>
+</body>
+</html>
